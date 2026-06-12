@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: your-org/github-supply-chain-review-action@v1
+      - uses: michyweb/github-supply-chain-review-action@v0.1.0
         with:
           rules-file: security/supply-chain-rules.yml
 ```
