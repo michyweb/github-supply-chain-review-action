@@ -8,7 +8,7 @@ inputs:
     default: ""
 
   rules-mode:
-    description: How to handle custom rules. Options: merge, replace
+    description: "How to handle custom rules. Options: merge, replace"
     required: false
     default: merge
 
@@ -24,7 +24,6 @@ runs:
     - name: Run supply chain review
       shell: bash
       env:
-        env:
         RULES_FILE: ${{ inputs.rules-file }}
         RULES_MODE: ${{ inputs.rules-mode }}
         BASE_REF: ${{ github.base_ref }}
