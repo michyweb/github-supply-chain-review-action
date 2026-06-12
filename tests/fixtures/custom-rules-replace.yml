@@ -1,0 +1,15 @@
+rules:
+  - id: custom-rule-1
+    name: Custom Rule One
+    paths:
+      - "(^|/)custom-one\\.json$"
+    patterns:
+      - pattern1
+      - pattern2
+
+  - id: custom-rule-2
+    name: Custom Rule Two
+    paths:
+      - "(^|/)custom-two\\.yml$"
+    patterns:
+      - pattern3

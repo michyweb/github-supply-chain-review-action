@@ -1,0 +1,170 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'rules/**'
+      - '.github/workflows/tests.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/requirements.txt
+
+      - name: Run tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Generate test report
+        if: always()
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v 2>&1 | tee test-results.txt
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-py${{ matrix.python-version }}
+          path: test-results.txt
+          retention-days: 7
+
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage -r tests/requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m unittest discover -s tests -p "test_*.py"
+          coverage report -m --fail-under=80
+          coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install lint tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint flake8
+
+      - name: Lint tests
+        run: |
+          pylint tests/ --disable=R,C --fail-under=8.0 || true
+          flake8 tests/ --max-line-length=120 --count || true
+
+      - name: Lint source code
+        run: |
+          pylint src/ --disable=R,C --fail-under=8.0 || true
+          flake8 src/ --max-line-length=120 --count || true
+
+  comment-results:
+    name: Comment Results
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [test, coverage]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/requirements.txt
+
+      - name: Run tests and capture output
+        id: test-run
+        run: |
+          output=$(python -m unittest discover -s tests -p "test_*.py" -v 2>&1)
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create PR comment with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testOutput = process.env.TEST_OUTPUT;
+            
+            // Extract test count and status
+            const lines = testOutput.split('\n');
+            const summaryLine = lines[lines.length - 3] || '';
+            
+            const comment = `## ✅ Test Results\n\n\`\`\`\n${testOutput}\n\`\`\`\n\n---\n*Tests run on: ${new Date().toISOString()}*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        env:
+          TEST_OUTPUT: ${{ steps.test-run.outputs.test_output }}
+        continue-on-error: true

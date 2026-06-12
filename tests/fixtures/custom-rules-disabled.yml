@@ -1,0 +1,12 @@
+disabled_rules:
+  - npm-package-scripts
+
+rules:
+  - id: company-custom-mcp
+    name: Company custom MCP configuration
+    paths:
+      - "(^|/)custom-mcp\\.json$"
+    patterns:
+      - command
+      - args
+      - docker
