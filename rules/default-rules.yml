@@ -4,61 +4,61 @@ rules:
     paths:
       - '(^|/)package\.json$'
     patterns:
-      - preinstall
-      - postinstall
-      - prepare
-      - curl\s+.*\|\s*(bash|sh)
-      - wget\s+.*\|\s*(bash|sh)
-      - node\s+-e
+      - 'preinstall'
+      - 'postinstall'
+      - 'prepare'
+      - 'curl\s+.*\|\s*(bash|sh)'
+      - 'wget\s+.*\|\s*(bash|sh)'
+      - 'node\s+-e'
 
   - id: npm-native-bindings
     name: npm native bindings
     paths:
       - '(^|/)binding\.gyp$'
     patterns:
-      - actions
-      - copies
-      - shell
-      - curl
-      - wget
-      - python
-      - node
+      - 'actions'
+      - 'copies'
+      - 'shell'
+      - 'curl'
+      - 'wget'
+      - 'python'
+      - 'node'
 
   - id: github-workflows
     name: GitHub workflows
     paths:
       - '(^|/)\.github/workflows/.*\.ya?ml$'
     patterns:
-      - curl\s+.*\|\s*(bash|sh)
-      - wget\s+.*\|\s*(bash|sh)
-      - pull_request_target
-      - secrets\.
-      - GITHUB_TOKEN
-      - permissions\s*:
-      - id-token\s*:\s*write
+      - 'curl\s+.*\|\s*(bash|sh)'
+      - 'wget\s+.*\|\s*(bash|sh)'
+      - 'pull_request_target'
+      - 'secrets\.'
+      - 'GITHUB_TOKEN'
+      - 'permissions\s*:'
+      - 'id-token\s*:\s*write'
 
   - id: devcontainers
     name: devcontainers
     paths:
       - '(^|/)\.devcontainer/.*'
     patterns:
-      - postCreateCommand
-      - initializeCommand
-      - updateContentCommand
-      - curl\s+.*\|\s*(bash|sh)
-      - docker\s+run
+      - 'postCreateCommand'
+      - 'initializeCommand'
+      - 'updateContentCommand'
+      - 'curl\s+.*\|\s*(bash|sh)'
+      - 'docker\s+run'
 
   - id: vscode-workspace-config
     name: VS Code workspace configuration
     paths:
       - '(^|/)\.vscode/(tasks|launch|extensions|settings)\.json$'
     patterns:
-      - command
-      - args
-      - shell
-      - bash
-      - powershell
-      - recommendations
+      - 'command'
+      - 'args'
+      - 'shell'
+      - 'bash'
+      - 'powershell'
+      - 'recommendations'
 
   - id: ai-agent-instructions
     name: AI agent instructions
@@ -68,14 +68,14 @@ rules:
       - '(^|/)\.github/copilot-instructions\.md$'
       - '(^|/)\.cursor/.*'
     patterns:
-      - run
-      - execute
-      - install
-      - curl
-      - wget
-      - \.ssh
-      - secrets
-      - token
+      - 'run'
+      - 'execute'
+      - 'install'
+      - 'curl'
+      - 'wget'
+      - '\.ssh'
+      - 'secrets'
+      - 'token'
 
   - id: mcp-configurations
     name: MCP configurations
@@ -83,11 +83,12 @@ rules:
       - '(^|/)mcp\.json$'
       - '(^|/)\.mcp\.json$'
     patterns:
-      - mcpServers
-      - command
-      - args
-      - docker
-      - python
-      - node
-      - bash
-      - sh
+      - 'mcpServers'
+      - 'command'
+      - 'args'
+      - 'docker'
+      - 'python'
+      - 'node'
+      - 'bash'
+      - 'sh'
+
