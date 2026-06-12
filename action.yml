@@ -1,5 +1,9 @@
 name: Supply Chain Review
-description: Detect risky supply chain changes in pull requests
+description: Detect patterns associated with Human-in-the-Loop supply chain attacks
+
+branding:
+  icon: check-circle
+  color: blue
 
 inputs:
   rules-file:
