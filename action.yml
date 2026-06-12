@@ -3,9 +3,14 @@ description: Detect risky supply chain changes in pull requests
 
 inputs:
   rules-file:
-    description: Path to the YAML rules file in the target repository
+    description: Optional custom YAML rules file in the caller repository
     required: false
-    default: security/supply-chain-rules.yml
+    default: ""
+
+  rules-mode:
+    description: How to handle custom rules. Options: merge, replace
+    required: false
+    default: merge
 
 runs:
   using: composite
@@ -19,7 +24,9 @@ runs:
     - name: Run supply chain review
       shell: bash
       env:
+        env:
         RULES_FILE: ${{ inputs.rules-file }}
+        RULES_MODE: ${{ inputs.rules-mode }}
         BASE_REF: ${{ github.base_ref }}
       run: |
         set -euo pipefail
