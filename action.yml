@@ -1,0 +1,26 @@
+name: Supply Chain Review
+description: Detect risky supply chain changes in pull requests
+
+inputs:
+  rules-file:
+    description: Path to the YAML rules file in the target repository
+    required: false
+    default: security/supply-chain-rules.yml
+
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -m pip install --user pyyaml
+
+    - name: Run supply chain review
+      shell: bash
+      env:
+        RULES_FILE: ${{ inputs.rules-file }}
+        BASE_REF: ${{ github.base_ref }}
+      run: |
+        set -euo pipefail
+        python3 "$GITHUB_ACTION_PATH/src/scan.py"
