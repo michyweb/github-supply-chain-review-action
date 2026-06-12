@@ -102,7 +102,11 @@ def main() -> int:
             path_patterns = rule.get("paths", [])
             content_patterns = rule.get("patterns", [])
 
-            if not any(re.search(pattern, file) for pattern in path_patterns):
+            if not any(
+                re.search(pattern, file)
+                for pattern in path_patterns
+                if isinstance(pattern, str)
+            ):
                 continue
 
             findings.append(f"[SENSITIVE FILE CHANGED] {file} matched rule '{rule_name}'")
@@ -113,6 +117,9 @@ def main() -> int:
             content = path.read_text(errors="ignore")
 
             for pattern in content_patterns:
+                if not isinstance(pattern, str):
+                    print(f"[WARNING] Skipping non-string pattern in rule '{rule_name}': {pattern!r}")
+                    continue
                 if re.search(pattern, content, re.IGNORECASE | re.MULTILINE):
                     findings.append(
                         f"[RISKY PATTERN] {file} matched '{pattern}' in rule '{rule_name}'"
