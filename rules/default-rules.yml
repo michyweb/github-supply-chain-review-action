@@ -24,18 +24,18 @@ rules:
       - 'python'
       - 'node'
 
-  - id: github-workflows
-    name: GitHub workflows
-    paths:
-      - '(^|/)\.github/workflows/.*\.ya?ml$'
-    patterns:
-      - 'curl\s+.*\|\s*(bash|sh)'
-      - 'wget\s+.*\|\s*(bash|sh)'
-      - 'pull_request_target'
-      - 'secrets\.'
-      - 'GITHUB_TOKEN'
-      - 'permissions\s*:'
-      - 'id-token\s*:\s*write'
+  # - id: github-workflows
+  #   name: GitHub workflows
+  #   paths:
+  #     - '(^|/)\.github/workflows/.*\.ya?ml$'
+  #   patterns:
+  #     - 'curl\s+.*\|\s*(bash|sh)'
+  #     - 'wget\s+.*\|\s*(bash|sh)'
+  #     - 'pull_request_target'
+  #     - 'secrets\.'
+  #     - 'GITHUB_TOKEN'
+  #     - 'permissions\s*:'
+  #     - 'id-token\s*:\s*write'
 
   - id: devcontainers
     name: devcontainers

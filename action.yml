@@ -23,7 +23,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        python3 -m pip install --user pyyaml
+        python3 -m pip install --require-hashes -r "$GITHUB_ACTION_PATH/requirements.txt"
 
     - name: Run supply chain review
       shell: bash

@@ -7,6 +7,26 @@ from pathlib import Path
 import yaml
 
 
+MAX_FILE_SIZE_BYTES = 1024 * 1024
+CONTENT_PATTERN_FLAGS = re.IGNORECASE | re.MULTILINE
+
+
+def compile_pattern(
+    pattern: str,
+    rule_name: str,
+    field_name: str,
+    flags: int = 0,
+) -> re.Pattern[str] | None:
+    try:
+        return re.compile(pattern, flags)
+    except re.error as exc:
+        print(
+            f"[WARNING] Skipping invalid regex in rule '{rule_name}' "
+            f"({field_name}): {pattern!r} ({exc})"
+        )
+        return None
+
+
 def load_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
@@ -63,6 +83,47 @@ def load_rules() -> list[dict]:
 
     return merged_rules
 
+
+def prepare_rules(rules: list[dict]) -> list[dict]:
+    prepared_rules: list[dict] = []
+
+    for rule in rules:
+        if not isinstance(rule, dict):
+            continue
+
+        prepared_rule = dict(rule)
+        rule_name = prepared_rule.get("name", "unnamed rule")
+
+        compiled_paths = []
+        for pattern in prepared_rule.get("paths", []):
+            if not isinstance(pattern, str):
+                continue
+
+            compiled_pattern = compile_pattern(pattern, rule_name, "paths")
+            if compiled_pattern is not None:
+                compiled_paths.append(compiled_pattern)
+
+        compiled_content_patterns = []
+        for pattern in prepared_rule.get("patterns", []):
+            if not isinstance(pattern, str):
+                print(f"[WARNING] Skipping non-string pattern in rule '{rule_name}': {pattern!r}")
+                continue
+
+            compiled_pattern = compile_pattern(
+                pattern,
+                rule_name,
+                "patterns",
+                CONTENT_PATTERN_FLAGS,
+            )
+            if compiled_pattern is not None:
+                compiled_content_patterns.append(compiled_pattern)
+
+        prepared_rule["paths"] = compiled_paths
+        prepared_rule["patterns"] = compiled_content_patterns
+        prepared_rules.append(prepared_rule)
+
+    return prepared_rules
+
 def run(command: list[str]) -> str:
     result = subprocess.run(
         command,
@@ -88,6 +149,7 @@ def main() -> int:
     changed_files = [line for line in changed_files_raw.splitlines() if line.strip()]
 
     rules = load_rules()
+    rules = prepare_rules(rules)
 
     print(f"Loaded {len(rules)} rules.")
     print(f"Changed files: {len(changed_files)}")
@@ -103,9 +165,8 @@ def main() -> int:
             content_patterns = rule.get("patterns", [])
 
             if not any(
-                re.search(pattern, file)
+                pattern.search(file)
                 for pattern in path_patterns
-                if isinstance(pattern, str)
             ):
                 continue
 
@@ -114,15 +175,28 @@ def main() -> int:
             if not path.exists() or not path.is_file():
                 continue
 
-            content = path.read_text(errors="ignore")
+            try:
+                file_size = path.stat().st_size
+            except OSError as exc:
+                print(f"[WARNING] Skipping {file}: could not read file metadata ({exc})")
+                continue
+
+            if file_size > MAX_FILE_SIZE_BYTES:
+                print(
+                    f"[WARNING] Skipping {file}: file too large ({file_size} bytes)"
+                )
+                continue
+
+            try:
+                content = path.read_text(errors="ignore")
+            except OSError as exc:
+                print(f"[WARNING] Skipping {file}: could not read file content ({exc})")
+                continue
 
             for pattern in content_patterns:
-                if not isinstance(pattern, str):
-                    print(f"[WARNING] Skipping non-string pattern in rule '{rule_name}': {pattern!r}")
-                    continue
-                if re.search(pattern, content, re.IGNORECASE | re.MULTILINE):
+                if pattern.search(content):
                     findings.append(
-                        f"[RISKY PATTERN] {file} matched '{pattern}' in rule '{rule_name}'"
+                        f"[RISKY PATTERN] {file} matched '{pattern.pattern}' in rule '{rule_name}'"
                     )
 
     if findings:
